@@ -18,6 +18,12 @@ const Container = styled.div`
       margin-right: 10px;
     }
   }
+
+  small {
+    color: red;
+    font-size: 14px;
+    font-weight: bold;
+  }
 `;
 
 export default Container;

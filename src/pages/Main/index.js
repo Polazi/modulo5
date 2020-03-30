@@ -13,6 +13,10 @@ export default class Main extends Component {
     newRepo: '',
     repositories: [],
     loading: false,
+    error: {
+      message: '',
+      status: false,
+    },
   };
 
   componentDidMount() {
@@ -36,17 +40,32 @@ export default class Main extends Component {
 
     this.setState({ loading: true });
     const { newRepo, repositories } = this.state;
-    const response = await api.get(`/repos/${newRepo}`);
 
-    const data = {
-      name: response.data.full_name,
-    };
+    try {
+      const duplicate = repositories.some(repo => repo.name === newRepo);
 
-    this.setState({
-      repositories: [...repositories, data],
-      newRepo: '',
-      loading: false,
-    });
+      if (duplicate) {
+        throw new Error('Repositório Duplicado');
+      }
+
+      const response = await api.get(`/repos/${newRepo}`);
+
+      const data = {
+        name: response.data.full_name,
+      };
+
+      this.setState({
+        repositories: [...repositories, data],
+        newRepo: '',
+        loading: false,
+        error: false,
+      });
+    } catch (err) {
+      this.setState({
+        loading: false,
+        error: { message: err.message, status: true },
+      });
+    }
   };
 
   handleChange = e => {
@@ -54,7 +73,7 @@ export default class Main extends Component {
   };
 
   render() {
-    const { newRepo, loading, repositories } = this.state;
+    const { newRepo, loading, repositories, error } = this.state;
     return (
       <Container>
         <h1>
@@ -62,7 +81,7 @@ export default class Main extends Component {
           Repositórios
         </h1>
 
-        <Form onSubmit={this.handleSubmit}>
+        <Form onSubmit={this.handleSubmit} error={error.status}>
           <input
             type="text"
             placeholder="Adicionar Repositório"
@@ -78,7 +97,7 @@ export default class Main extends Component {
             )}
           </SubmitButton>
         </Form>
-
+        {error.status && <small>{error.message}</small>}
         <List>
           {repositories.map(repo => (
             <li key={repo.name}>
